@@ -1,7 +1,5 @@
 # ql-server
-QML Web server
-
-Ql-Server - Qt/QML Web server with pure-JS HTTP processing.
+Qt/QML Web server with pure-JS HTTP processing.
 
 Registration:
 
