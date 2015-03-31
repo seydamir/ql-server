@@ -1,5 +1,6 @@
 // HTTP server
 
+// file operations
 var File = false;
 
 // string to bytes
@@ -76,10 +77,10 @@ function parseRequest(request){
 	return request;
 }
 
-// available methods
+// request methods
 var methods = [ 'OPTIONS', 'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT' ];
 
-// codes names
+// response codes
 var codes = {
 	100:'Continue', 101:'Switching Protocols', 200:'OK', 201:'Created', 202:'Accepted', 203:'Non-Authoritative Information',
 	204:'No Content', 205:'Reset Content', 206:'Partial Content', 300:'Multiple Choices', 301:'Moved Permanently',
@@ -92,7 +93,7 @@ var codes = {
 	504:'Gateway Time-out', 505:'HTTP Version not supported',
 };
 
-// content types
+// content MIMEs
 var types = {
 	txt:'text/plain; charset="utf-8"', bin:'application/octet-stream',
 	html:'text/html; charset="utf-8"', js:'application/javascript; charset="utf-8"',
@@ -120,50 +121,50 @@ function serve(parent, port, dir, callback){
 				console.log('QlServer serving',request.method,request.uri);
 
 				// response object
-				var response = { served:false,
-					ver:request.ver,
-					code:200,    // response code
-					content:'',  // text/html content
-					blob:[],     // binary content
-					headers:{ 'Content-Type':types.html }
+				var response = {
+					served:  false,       // 'content was served' flag
+					ver:     request.ver, // protocol version
+					code:    200,         // response code
+					content: '',          // text/html content
+					blob:    [],          // binary content
+					headers: { 'Content-Type':types.html },
+					cookies: {},
 				}
 
-				// call callback
+				// call user callback function
 				if (callback) callback(request,response);
 
 				// serve static file
-				if (!response.served){
-					if (request.method === 'GET'){
-						var file = dir + request.url;
-						if (File.exists(file) && File.isFile(file)){
-							var ext = fext(file); // get extension
-							// serve text content
-							if (['txt','html','js','css'].indexOf(ext) != -1){
-								response.content = File.readString(file,'utf8');
-								response.headers['Content-Type'] = types[ext];
-								response.served = true;
-							}
-							// serve image/document
-							else if (['png','jpg','gif','bmp','pdf'].indexOf(ext) != -1){
-								response.blob = File.readBytes(file);
-								response.headers['Content-Type']   = types[ext];
-								response.headers['Content-Length'] = response.blob.length;
-								response.served = true;
-							}
-							// serve other binary content
-							else {
-								response.blob = File.readBytes(file);
-								response.headers['Content-Type']   = types['bin'];
-								response.headers['Content-Length'] = response.blob.length;
-								response.served = true;
-							}
-							if (response.served) console.log('QlServer served file',file);
+				if ((!response.served)&&(request.method === 'GET')){
+					var file = dir + request.url;
+					if (File.exists(file) && File.isFile(file)){
+						var ext = fext(file); // get extension
+						// serve text content
+						if (['txt','html','js','css'].indexOf(ext) != -1){
+							response.content = File.readString(file,'utf8');
+							response.headers['Content-Type'] = types[ext];
+							response.served = true;
 						}
+						// serve image/document
+						else if (['png','jpg','gif','bmp','pdf'].indexOf(ext) != -1){
+							response.blob = File.readBytes(file);
+							response.headers['Content-Type']   = types[ext];
+							response.headers['Content-Length'] = response.blob.length;
+							response.served = true;
+						}
+						// serve other binary content
+						else {
+							response.blob = File.readBytes(file);
+							response.headers['Content-Type']   = types['bin'];
+							response.headers['Content-Length'] = response.blob.length;
+							response.served = true;
+						}
+						if (response.served) console.log('QlServer served file',file);
 					}
 				}
 				
 				// not served - error
-				if (!response.served) response = {served:true, ver:request.ver, code:404, headers:[], content:'', blob:[]};
+				if (!response.served) response = {served:true, ver:request.ver, code:404, content:'', blob:[], headers:{}, cookies:{}};
 				
 				// serve response packet
 				if (response.served){
