@@ -39,7 +39,7 @@ void QlServer::close(){
 }
 
 void QlServer::respond(const QString &response){
-//	response_.clear();
+	response_.clear();
 	response_ = response;
 	std::cout << "QlServer response set to ...\n";
 }

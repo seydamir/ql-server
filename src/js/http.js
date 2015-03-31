@@ -12,18 +12,17 @@ function stob(s){
 // bytes to string
 function btos(b,start,end){
 	var s = [];
-	if (!start) start = 0;
-	if (!end) end = b.length;
-	while (start < end) s.push(String.fromCharCode(b[start++]));
+	if (start === undefined) start = 0;
+	if (end === undefined)   end = b.length-1;
+	while (start < end) s.push(String.fromCharCode(b[start++] & 0xFF));
 	return s.join('');
 }
 
-// check if string ends with suffix
+// get file extension
 function fext(s){
 	var ss = s.split('.');
-	return ss.length > 1 ? ss.pop() : '';
+	return ss.length > 1 ? ss.pop().toLowerCase() : '';
 };
-
 
 // parse HTTP request
 function parseRequest(request){
@@ -34,22 +33,21 @@ function parseRequest(request){
 	
 	if (lines.length > 2){
 		request.request = lines[0];
-		// get 1st line
+		
+		// parse 1st line (method/URI/version)
 		var m = /^([A-Z]+) (.*) HTTP\/([0-9])\.([0-9])$/.exec(lines[0]);
 		if (m){
-			request.method = m[1];
-			request.uri    = m[2];
-			request.ver    = m[3] + '.' + m[4];
-			request.verHi  = m[3];
-			request.verLo  = m[4];
+			request.method=m[1]; request.uri=m[2];
+			request.verh=m[3]; request.verl=m[4];
+			request.ver = m[3] + '.' + m[4];
 			
-			// get URL query/hash
+			// get URL query/hash from full URI
 			var u = request.uri.split('?');
-			request.url = u[0];
-			request.query = (u.length > 1) ? u[1] : '';
+			request.url = u[0];                          // URL
+			request.query = (u.length > 1) ? u[1] : '';  // query
 			u = request.query.split('#');
 			request.query = u[0];
-			request.hash = (u.length > 1) ? u[1] : '';
+			request.hash = (u.length > 1) ? u[1] : '';   // hash
 			
 			// split query to params
 			request.queries = {};
@@ -61,7 +59,7 @@ function parseRequest(request){
 			
 			// get headers
 			var i = 1;
-			while (lines[i].length > 0){
+			while ((i < lines.length) && (lines[i].length > 0)){
 				var m = /^([A-Za-z\\-]+): (.*)$/.exec(lines[i]);
 				if (m) request.headers[m[1]] = m[2];
 				i++;
@@ -75,7 +73,6 @@ function parseRequest(request){
 			request.error = false;
 		}
 	}
-
 	return request;
 }
 
@@ -121,6 +118,8 @@ function serve(parent, port, dir, callback){
 			var request = parseRequest(request);
 			if (!request.error){
 				console.log('QlServer serving',request.method,request.uri);
+
+				// response object
 				var response = { served:false,
 					ver:request.ver,
 					code:200,
@@ -128,8 +127,10 @@ function serve(parent, port, dir, callback){
 					blob:[],
 					headers:{ 'Content-Type':types.html }
 				}
-				callback(request,response);
-				
+
+				// call callback
+				if (callback) callback(request,response);
+
 				// serve static file
 				if (!response.served){
 					if (request.method === 'GET'){
