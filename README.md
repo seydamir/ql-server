@@ -36,4 +36,4 @@ ApplicationWindow { id:app; visible:true
 		});
 	}
 }
-
+```

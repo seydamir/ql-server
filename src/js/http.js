@@ -122,9 +122,9 @@ function serve(parent, port, dir, callback){
 				// response object
 				var response = { served:false,
 					ver:request.ver,
-					code:200,
-					content:'',
-					blob:[],
+					code:200,    // response code
+					content:'',  // text/html content
+					blob:[],     // binary content
 					headers:{ 'Content-Type':types.html }
 				}
 
@@ -136,15 +136,24 @@ function serve(parent, port, dir, callback){
 					if (request.method === 'GET'){
 						var file = dir + request.url;
 						if (File.exists(file) && File.isFile(file)){
-							var ext = fext(file);
+							var ext = fext(file); // get extension
+							// serve text content
 							if (['txt','html','js','css'].indexOf(ext) != -1){
 								response.content = File.readString(file,'utf8');
 								response.headers['Content-Type'] = types[ext];
 								response.served = true;
 							}
-							else if (['png','jpg','gif','bmp'].indexOf(ext) != -1){
+							// serve image/document
+							else if (['png','jpg','gif','bmp','pdf'].indexOf(ext) != -1){
 								response.blob = File.readBytes(file);
-								response.headers['Content-Type'] = types[ext];
+								response.headers['Content-Type']   = types[ext];
+								response.headers['Content-Length'] = response.blob.length;
+								response.served = true;
+							}
+							// serve other binary content
+							else {
+								response.blob = File.readBytes(file);
+								response.headers['Content-Type']   = types['bin'];
 								response.headers['Content-Length'] = response.blob.length;
 								response.served = true;
 							}
