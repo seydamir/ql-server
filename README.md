@@ -30,7 +30,7 @@ ApplicationWindow { id:app; visible:true
 		// check request method and URL
 		if ((req.method === 'GET')&&(req.url === '/data.json')){
 			// serve JSON array
-			resp.headers['Content-Type'] = Http.types.json;
+			resp.headers['Content-Type'] = types.json;
 			resp.content = '[0,1,2,3,4,5,6,7,8,9]';
 			resp.served  = true;
 		}
