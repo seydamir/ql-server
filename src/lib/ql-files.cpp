@@ -1,7 +1,6 @@
 #include "ql-files.hpp"
 #include <stdint.h>
 
-QlFiles::QlFiles() : QObject() { }
 QlFiles::QlFiles(QObject* parent) : QObject(parent) { }
 
 QString QlFiles::urlToLocalFile(const QUrl &path){ return path.toLocalFile(); }
@@ -18,7 +17,7 @@ bool QlFiles::match(const QString &filter, const QString &path){ return QDir::ma
 bool QlFiles::isFile(const QString &path){ return QFileInfo(path).isFile(); }
 bool QlFiles::isDir(const QString &path){ return QFileInfo(path).isDir(); }
 
-qint64 QlFiles::size(const QString &path){ return QFileInfo(path).size(); }
+qint64  QlFiles::size(const QString &path){ return QFileInfo(path).size(); }
 QString QlFiles::path(const QString &path){ return QFileInfo(path).path(); }
 QString QlFiles::name(const QString &path){ return QFileInfo(path).fileName(); }
 QString QlFiles::ext(const QString &path){ return QFileInfo(path).suffix(); }
@@ -64,6 +63,7 @@ bool QlFiles::writeBytes(const QString &path, const QList<QVariant> &b){
 }
 
 QStringList QlFiles::argv_ = QStringList();
+void QlFiles::argvSet(QApplication *app){ argv_.append( app->arguments() ); }
 QStringList QlFiles::argv(){ return QlFiles::argv_; }
 
 Q_DECLARE_METATYPE(QlFiles*)
