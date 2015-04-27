@@ -7,6 +7,9 @@ Item {
 	property string filesDir: ''
 	property var callback:    function(req,resp){}
 	
+	property bool kvEnabled:  false
+	property var  kv:         {}
+	
 	QlServer { id:server_ }
 	QlFiles  { id:file_ }
 
@@ -72,7 +75,7 @@ Item {
 		if (request instanceof Array) request = btos(request);
 		var lines = request.split('\r\n');
 	
-		request = {error:true, lines:lines, headers:{},};
+		request = {error:true, lines:lines, headers:{}, cookies:{}, postQuery:'', postQueries:{},};
 	
 		if (lines.length > 2){
 			request.request = lines[0];
@@ -108,12 +111,24 @@ Item {
 					i++;
 				}
 				i++;
-			
+				
+				// get cookies
+				if ('Cookie' in request.headers){
+					var cookies = request.headers['Cookie'].split(';');
+					for (var i=0; i<cookies.length; i++){
+						var cookie = cookies[i].split('=');
+						if (cookie.length === 2) request.cookies[cookie[0].trim()] = cookie[1].trim();
+					}
+				}
+				
 				// get rest of content
-				var b = [];
-				while (i < lines.length) b.push( lines[i++] );
-				request.content = b.join('\r\n');
+				request.contentLines = lines.slice(i);
+				request.content = request.contentLines.join('\r\n');
 				request.error = false;
+				
+				// parse POST parameters
+				if ((request.method === 'POST')&&(request.contentLines.length > 0)){
+				}
 			}
 		}
 		return request;
@@ -128,6 +143,7 @@ Item {
 		server_.requestHandler.connect(function(s,dir,callback){
 			return function(request){
 				var request = parseRequest(request);
+
 				if (!request.error){
 					console.log('QlServer serving',request.method,request.uri);
 
@@ -139,16 +155,22 @@ Item {
 						content: '',          // text/html content
 						blob:    [],          // binary content
 						headers: { 'Content-Type':types.html },
-						cookies: {},
+						cookies: request.cookies,
 					}
 
+					// serve Key-Value requests
+					if (kvEnabled && (request.method === 'POST') && (request.url === '/kv.json')){
+						
+					}
+					
 					// call user callback function
 					if (callback) callback(request,response);
 
 					// serve static file
 					if ((!response.served) && (dir !== '') && (request.method === 'GET')){
 						var f = dir + request.url;
-						if (file_.exists(f) && file_.isFile(f)){
+						// check if file exists
+						if (file_.isFile(f)){
 							var ext = typeAlias[fext(f)]; // get extension alias
 							// serve text content
 							if (['txt','html','js','css'].indexOf(ext) != -1){
@@ -180,7 +202,11 @@ Item {
 					// serve response packet
 					if (response.served){
 						var resp = ['HTTP/' + response.ver + ' ' + response.code + ' ' + codes[response.code]];
+						// set headers
 						for (var k in response.headers) resp.push(k + ': ' + response.headers[k]);
+						// set cookies
+						for (var k in response.cookies) resp.push('Set-Cookie: ' + k + '=' + response.cookies[k]);
+						// set body/content/blob
 						resp.push('');
 						if (response.code === 200){
 							resp.push(response.content);

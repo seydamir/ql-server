@@ -57,7 +57,8 @@ bool QlFiles::writeBytes(const QString &path, const QList<QVariant> &b){
     QFile f(path);
     if (!f.open(QFile::WriteOnly)) return false;
     QDataStream fout(&f);
-    for (int i=0; i<b.size(); i++) fout << ((uint8_t)b[i].toInt(0) & 0xFF);
+    for (int i=0; i<b.size(); i++)
+    	fout << (uint8_t)(b[i].toInt(0) & 0xFF);
     f.close();
     return true;
 }
@@ -67,4 +68,3 @@ void QlFiles::argvSet(QApplication *app){ argv_.append( app->arguments() ); }
 QStringList QlFiles::argv(){ return QlFiles::argv_; }
 
 Q_DECLARE_METATYPE(QlFiles*)
-
