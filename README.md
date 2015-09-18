@@ -1,5 +1,6 @@
 # ql-server
 Qt/QML Web server with pure-JS HTTP processing.
+Donate: Paypal edartuz@gmail.com
 
 Registration:
 
